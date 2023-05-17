@@ -20,5 +20,5 @@ GREEN = (118, 150, 86)
 # MOVE HINT COLOR
 YELLOW = (255, 255, 0)
 
-
-
+#DAMA CROWN
+CROWN = pygame.transform.scale(pygame.image.load('assets/crown.png'), (44, 25))
