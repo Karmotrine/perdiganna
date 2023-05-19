@@ -1,6 +1,6 @@
 import pygame
 
-WIDTH, HEIGHT = 800, 800
+WIDTH, HEIGHT = 600, 600
 ROWS, COLS = 8, 8
 SQUARE_SIZE = WIDTH//COLS
 
@@ -18,7 +18,7 @@ WHITE = (238, 238, 210)
 GREEN = (118, 150, 86)
 
 # MOVE HINT COLOR
-YELLOW = (255, 255, 0)
+ORANGE = (255, 191, 0)
 
-#DAMA CROWN
+# DAMA CROWN
 CROWN = pygame.transform.scale(pygame.image.load('assets/crown.png'), (44, 25))
