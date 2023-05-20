@@ -7,15 +7,37 @@ Transposition Table
 from lru import LRU
 from random import getrandbits
 
-class TTable():
+"""
+Board Format:
+[
+	[0, (0, 0, 0), 0, (0, 0, 0), 0, (0, 0, 0), 0, (0, 0, 0)], 
+	[(0, 0, 0), 0, (0, 0, 0), 0, (0, 0, 0), 0, (0, 0, 0), 0], 
+	[0, (0, 0, 0), 0, (0, 0, 0), 0, (0, 0, 0), 0, (0, 0, 0)], 
+	[0, 0, 0, 0, 0, 0, 0, 0], 
+	[0, (255, 0, 0), 0, 0, 0, 0, 0, 0], 
+	[(255, 0, 0), 0, 0, 0, (255, 0, 0), 0, (255, 0, 0), 0],
+	[0, (255, 0, 0), 0, (255, 0, 0), 0, (255, 0, 0), 0, (255, 0, 0)],
+	[(255, 0, 0), 0, (255, 0, 0), 0, (255, 0, 0), 0, (255, 0, 0), 0], 
+	[],
+]
+- Empty grid = int
+- Occupied grid = tuple
+    - Black = (0,0,0)
+    - Red = (255,0,0)
+
+"""
+
+
+class TTable:
     def __init__(self):
         # 2^16 = 65536 // 2^32 = 4294967296
         self.map = LRU(4294967296)
 
-        self.RED_PIECE = 0
-        self.BLACK_PIECE = 1
-        self.RED_KING = 2
-        self.BLACK_KING = 3
+        self.EMPTY = 0
+        self.RED_PIECE = (255, 0, 0)
+        self.BLACK_PIECE = (0, 0, 0)
+        self.RED_KING = 2 #?
+        self.BLACK_KING = 3 #?
 
         self.matrix = []
         for row in range(8):
@@ -27,7 +49,7 @@ class TTable():
                 zobrist_row.append(zobrist_column)
             self.matrix.append(zobrist_row)
 
-    def get_hash(self, board):
+    def get_hash(self, board) -> str:
         hash_code = 0
         for row in range(8):
             for column in range(8):              
@@ -50,7 +72,7 @@ class TTable():
 
                 # return the hash_code
 
-    # cache_value = {alpha, beta, evaluation, best_move, depth}
+    # cache_value = {alpha, beta, evaluation, best_move, depth, flag}
     def store_value(self, board, cache_value):
         self.map[self.get_hash(board)] = cache_value
 
@@ -70,6 +92,9 @@ class TTable():
     """
     def check_key(self, board):
         return self.map.has_key(self.get_hash(board))
+
+    def clear_table(self):
+        self.map = LRU(4294967296)
     
 
 

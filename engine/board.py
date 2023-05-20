@@ -27,6 +27,7 @@ class Board:
                 self.black_kings += 1
             else:
                 self.red_kings += 1 
+        print(self.board)
 
     def get_piece(self, row, col):
         return self.board[row][col]
