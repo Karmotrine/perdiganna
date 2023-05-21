@@ -25,8 +25,6 @@ class Piece:
 
     def make_king(self):
         self.king = True
-
-    
     
     def draw(self, win):
         radius = SQUARE_SIZE // 2 - self.PADDING

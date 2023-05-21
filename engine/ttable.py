@@ -24,8 +24,12 @@ Board Format:
 - Occupied grid = tuple
     - Black = (0,0,0)
     - Red = (255,0,0)
+    - Empty = 0
 
 """
+
+BLACK = (0,0,0)
+RED = (255,0,0)
 
 
 class TTable:
@@ -34,12 +38,14 @@ class TTable:
         self.map = LRU(4294967296)
 
         self.EMPTY = 0
-        self.RED_PIECE = (255, 0, 0)
-        self.BLACK_PIECE = (0, 0, 0)
+        self.RED_PIECE = 1
+        self.BLACK_PIECE = 2
         self.RED_KING = 2 #?
         self.BLACK_KING = 3 #?
 
         self.matrix = []
+        # Double check this stuff:
+        #   - Is the matrix really a 3D Array?
         for row in range(8):
             zobrist_row = []
             for column in range(8):
@@ -53,24 +59,22 @@ class TTable:
         hash_code = 0
         for row in range(8):
             for column in range(8):              
-                """                 
-                I have yet to study how the board was made
-                Checking if board can pass what piece each
-                grid contains. 
-                """
-                pass
+                this_piece = board.get_piece(row, column)
                 # If empty piece, continue
+                if this_piece == 0:
+                    continue
 
-                # IF current grid contains a red piece, 
-                    # XOR hash_code with the value from the corresponding grid in self.matrix[currentRow][currentCol][self.RED_PIECE]
-                # ELIF current grid contains a black piece, 
-                    # XOR hash_code with the value from the corresponding grid in self.matrix[currentRow][currentCol][self.BLACK_PIECE]
-                # ELIF current grid contains a red king, 
-                    # XOR hash_code with the value from the corresponding grid in self.matrix[currentRow][currentCol][self.RED_KING]
-                # ELIF current grid contains a black king, 
-                    # XOR hash_code with the value from the corresponding grid in self.matrix[currentRow][currentCol][self.BLACK_KING]
+                # XOR hash_code with the value from the corresponding grid in self.matrix[currentRow][currentCol][self.RED_PIECE]
+                if this_piece.color == RED:
+                    hash_code ^= self.matrix[row][column][self.RED_PIECE]
+                elif this_piece.color == BLACK:
+                    hash_code ^= self.matrix[row][column][self.BLACK_PIECE]
+                elif this_piece.color == RED and this_piece.king == True:
+                    hash_code ^= self.matrix[row][column][self.RED_KING]
+                elif this_piece.color == BLACK and this_piece.king == True:
+                    hash_code ^= self.matrix[row][column][self.BLACK_KING]
 
-                # return the hash_code
+        return hash_code
 
     # cache_value = {alpha, beta, evaluation, best_move, depth, flag}
     def store_value(self, board, cache_value):
@@ -92,9 +96,6 @@ class TTable:
     """
     def check_key(self, board):
         return self.map.has_key(self.get_hash(board))
-
-    def clear_table(self):
-        self.map = LRU(4294967296)
     
 
 

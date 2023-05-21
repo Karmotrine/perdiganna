@@ -32,7 +32,7 @@ class AlphaBetaAgent:
                 return transposition_cache.evaluation, transposition_cache.best_move
             elif transposition_cache.flag == "LOWERBOUND":
                 alpha = max(beta, transposition_cache.evaluation)
-            elif transposition_cache.flag == "UPPERBOUND":
+            else: # elif transposition_cache.flag == "UPPERBOUND":
                 beta = min(beta, transposition_cache.evaluation)
             # What is this for?
             if alpha >= beta:
@@ -84,7 +84,7 @@ class AlphaBetaAgent:
             for move in self.get_all_moves(position, RED, game):
                 current_evaluation = self.prune() # Complete all params
                 maxEval = min(current_evaluation, maxEval)
-                beta = min(alpha, maxEval)
+                beta = min(beta, maxEval)
                 # How about best_move?
                 best_move = move
                 if beta <= alpha:
@@ -152,3 +152,10 @@ class AlphaBetaAgent:
                 moves.append(new_board)
         
         return moves
+
+
+"""
+Upperbounds/Lowerbounds
+    - https://github.com/looper-m/checkers-ai/blob/master/MTDf.py
+    - https://github.com/danthurston/BeatMyChessAI/blob/main/mtdf.py
+"""
