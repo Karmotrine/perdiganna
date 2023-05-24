@@ -6,6 +6,7 @@ Transposition Table
 """
 from lru import LRU
 from random import getrandbits
+from .board import Board
 
 """
 Board Format:
@@ -55,7 +56,7 @@ class TTable:
                 zobrist_row.append(zobrist_column)
             self.matrix.append(zobrist_row)
 
-    def get_hash(self, board) -> str:
+    def get_hash(self, board: Board) -> int:
         hash_code = 0
         for row in range(8):
             for column in range(8):              
@@ -80,7 +81,7 @@ class TTable:
     def store_value(self, board, cache_value):
         self.map[self.get_hash(board)] = cache_value
 
-    def get_value(self, board):
+    def get_value(self, board) -> dict:
         return self.map[self.get_hash(board)]
 
     def get_size(self):
@@ -96,8 +97,6 @@ class TTable:
     """
     def check_key(self, board):
         return self.map.has_key(self.get_hash(board))
-    
-
 
 
 

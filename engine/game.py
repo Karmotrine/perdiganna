@@ -4,6 +4,13 @@ from .board import Board
 
 
 class Game:
+    def _init(self):
+        self.selected = None
+        self.board : Board = Board()
+        self.turn : tuple = RED
+        self.valid_moves : dict = {}
+
+
     def __init__(self, win):
         self._init()
         self.win = win
@@ -12,12 +19,6 @@ class Game:
         self.board.draw(self.win)
         self.draw_valid_moves(self.valid_moves)
         pygame.display.update()
-
-    def _init(self):
-        self.selected = None
-        self.board = Board()
-        self.turn = RED
-        self.valid_moves = {}
 
     def winner(self):
         return self.board.winner()
@@ -66,3 +67,11 @@ class Game:
             self.turn = BLACK
         else:
             self.turn = RED
+
+
+    def get_board(self):
+        return self.board
+
+    def ai_move(self, board):
+        self.board = board
+        self.change_turn()

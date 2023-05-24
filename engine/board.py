@@ -10,6 +10,7 @@ class Board:
         self.red_kings = self.black_kings = 0
         self.create_board()
 
+
     # GREEN, WHITE FOR TILES
     def draw_squares(self, win):
         win.fill(WHITE)
@@ -28,7 +29,7 @@ class Board:
             else:
                 self.red_kings += 1
         # Debugging
-        print(self.board)
+        #print(self.board)
 
     def get_piece(self, row, col):
         return self.board[row][col]
@@ -47,6 +48,9 @@ class Board:
                 else:
                     self.board[row].append(0)
 
+    # Old Evaluation
+    def evaluate(self):
+        return self.black_left - self.red_left + (self.black_kings * 0.5 - self.red_kings * 0.5)
 
     def draw(self, win):
         self.draw_squares(win)
@@ -152,3 +156,12 @@ class Board:
             right += 1
 
         return moves
+    
+    def get_all_pieces(self, color):
+        pieces = []
+        for row in self.board:
+            for piece in row:
+                if piece != 0 and piece.color == color:
+                    pieces.append(piece)
+        return pieces
+
