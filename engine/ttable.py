@@ -31,6 +31,7 @@ Board Format:
 
 BLACK = (0,0,0)
 RED = (255,0,0)
+from watchpoints import watch
 
 
 class TTable:
@@ -56,10 +57,12 @@ class TTable:
                 zobrist_row.append(zobrist_column)
             self.matrix.append(zobrist_row)
 
-    def get_hash(self, board: Board) -> int:
+    def get_hash(self, board: Board):
         hash_code = 0
         for row in range(8):
             for column in range(8):              
+                if type(board) == int:
+                    print(f"bad board value: {board}")
                 this_piece = board.get_piece(row, column)
                 # If empty piece, continue
                 if this_piece == 0:
@@ -95,7 +98,7 @@ class TTable:
     Try to test what happens if we attempt to get a value
     of a game board that has not been cached yet
     """
-    def check_key(self, board):
+    def check_key(self, board: Board):
         return self.map.has_key(self.get_hash(board))
 
 

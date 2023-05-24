@@ -26,7 +26,7 @@ def main():
     # Make a new Agent object
     # Test for 7 seconds
     this_agent : AlphaBetaAgent = AlphaBetaAgent(7)
-    watch(game.board)
+    #watch(game.board)
 
     while run:
         clock.tick(FPS)
@@ -38,9 +38,9 @@ def main():
             game.ai_move(new_board)
             #print(f"DD: ${game}")
             
-        if game.winner() != False:
+        if game.winner() != None:
             #print(game.winner())
-            print("test")
+            run = False
         
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
