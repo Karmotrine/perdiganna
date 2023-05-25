@@ -25,7 +25,7 @@ def main():
     game = Game(WIN)
     # Make a new Agent object
     # Test for 7 seconds
-    this_agent : AlphaBetaAgent = AlphaBetaAgent(7)
+    this_agent : AlphaBetaAgent = AlphaBetaAgent(5)
     #watch(game.board)
 
     while run:

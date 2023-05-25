@@ -1,3 +1,4 @@
+import random
 import time
 from copy import deepcopy
 import pygame
@@ -19,16 +20,20 @@ class AlphaBetaAgent:
         #self.eval_fn = eval_fn
         self.start_time = 0
         self.cache_table = TTable()
+        self.agent_force_capture = False
         print("ABP Agent intialized")
 
     def is_out_of_time(self):
         return time.monotonic() - self.start_time > self.move_timeout
 
     def prune(self, position: Board, depth: int, alpha: float, beta: float, max_player: tuple, game: Game, activate_timer: bool = True):
+        # Fix position.evaluate()
+        print(f"depth: {depth}, alpha: {alpha}, beta: {beta}, valuation: {position.evaluate()}, color: {max_player}")
         # Iterative Deepening Timer
         if activate_timer and self.is_out_of_time():
             # Match return type
-            return 0, 0
+            value = (max_player == BLACK) if alpha else beta
+            return position.evaluate(), value
         
         # Access Transposition Table Cache
         # What is Board vs Position vs Game? Review Tutorial
@@ -52,6 +57,7 @@ class AlphaBetaAgent:
         # Recursion Base-Case / Terminating Function
         if (depth == 0) or (position.winner() is not None):
             # What datatype is position?
+            print("Reached Base Case")
             return position.evaluate(), position
         
         # ABP:
@@ -99,9 +105,9 @@ class AlphaBetaAgent:
                 if alpha >= minEval:
                     break
             thisFlag = "EXACT"
-            if minEval >= beta:
+            if minEval <= beta:
                 thisFlag = "UPPERBOUND"
-            elif minEval <= alpha:
+            elif minEval >= alpha:
                 thisFlag = "LOWERBOUND"
             values = {
                 'depth': depth, 
@@ -119,16 +125,20 @@ class AlphaBetaAgent:
     def decide(self, position: Board, max_player, game: Game):
         # Wrapper function to add depth and limit time
         self.start_time = time.monotonic()
-        current_depth = 1 # 1 or 0?
+        current_depth = 0
         current_best_move = None
         current_maxEval = None
+        #watch(game)
 
-        print("Before starting pruning")
-        print(f"{self.is_out_of_time()}")
-        while not self.is_out_of_time():
-            current_maxEval, current_best_move = self.prune(position, current_depth, float('-inf'), float('inf'), BLACK, game, True)
+        while True:
             current_depth += 1
+            current_maxEval, current_best_move = self.prune(position, current_depth, float('-inf'), float('inf'), BLACK, game, True)
+            if self.is_out_of_time():
+                break
+        #current_maxEval, current_best_move = self.prune(position, max_depth, float('-inf'), float('inf'), BLACK, game, True)
         
+        self.agent_force_capture = False
+
         return current_maxEval, current_best_move
 
         
@@ -149,16 +159,39 @@ class AlphaBetaAgent:
 
     def get_all_moves(self, board : Board, color : tuple, game : Game):
         moves = []
-
+        capture_moves = []
+        normal_moves = []
+        all_force_capture = False
         for piece in board.get_all_pieces(color):
+            force_capture_piece = False
+            all_force_capture = True
             valid_moves = board.get_valid_moves(piece)
+            # NEW: Force Capture
+            if any(valid_moves.values()):
+                self.agent_force_capture = True
+                all_force_capture = True
+                force_capture_piece = True
+                valid_moves = {key: val for key, val in valid_moves.items() if val != []}
             for move, skip in valid_moves.items():
                 self.draw_moves(game, board, piece)
                 temp_board = deepcopy(board)
                 temp_piece = temp_board.get_piece(piece.row, piece.col)
                 new_board = self.simulate_move(temp_piece, move, temp_board, game, skip)
+                if not force_capture_piece:
+                    normal_moves.append(new_board)
+                else:
+                    capture_moves.append(new_board)
                 moves.append(new_board)
-        
+        if all_force_capture and self.agent_force_capture:
+            print("Give only Captures")
+            moves.extend(capture_moves)
+        else:
+            print("Give only moves")
+            moves.extend(normal_moves)
+        print(f"moves: {moves}")
+        # How do you prune out the moves that are not captures?
+        # NEW: Randomize moves
+        random.shuffle(moves)
         return moves
 
 
