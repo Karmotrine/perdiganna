@@ -4,11 +4,13 @@ from pygame.locals import *
 import time
 from copy import deepcopy
 import random
+import time
 
 #each square is a list of features
 # board = [x,y,row,column,free,color,king]
 # row=0 -> even, color=0 -> white, color=1 -> black, king=1 -> True
-
+# x-axis: +150, y-axis: +75
+# y-axis: inverse (always positive)
 
 # Yellow = Move hint
 def check_moves(el,yellow,board,only_jumps,diz):
@@ -255,10 +257,13 @@ def all_moves(color,board):
     return list_final
 
 
-def minimax_fun(max_player,depth,board,black_move,move=[],alpha=float('-inf'),beta=float('inf')):
+def minimax_fun(max_player,depth,board,black_move, start_time, max_time, move=[],alpha=float('-inf'),beta=float('inf')):
     print(f"depth: {depth}, alpha: {alpha}, beta: {beta}, max_player: {max_player}")
 
     if depth==0 or game_finished(board,0) or game_finished(board,1):
+        val=evaluate(board,move)
+        return val
+    if time.time() - start_time >= max_time:
         val=evaluate(board,move)
         return val
     
@@ -272,7 +277,7 @@ def minimax_fun(max_player,depth,board,black_move,move=[],alpha=float('-inf'),be
                 diz_copy={key:i[dest]}
             board_copy=deepcopy(board)
             board_copy=update_graphics(diz_copy,dest,origin,False,board_copy)
-            minimax = minimax_fun(False,depth-1,board_copy,False,i)
+            minimax = minimax_fun(False,depth-1,board_copy,False, start_time, max_time, i)
             if minimax>max_best:
                 coll={}
                 max_best=minimax
@@ -281,6 +286,10 @@ def minimax_fun(max_player,depth,board,black_move,move=[],alpha=float('-inf'),be
                 max_best=minimax
                 coll[dest]=[max_best,i,origin]
         dest, minimax  = random.choice(list(coll.items()))
+        # Iterative Deepening
+        #if time.time() - start_time >= max_time:
+        #    return minimax[0],minimax[2],dest,minimax[1]
+        # Final return
         return minimax[0],minimax[2],dest,minimax[1]
     elif max_player==True:
         best=float('-inf')
@@ -292,7 +301,7 @@ def minimax_fun(max_player,depth,board,black_move,move=[],alpha=float('-inf'),be
                 diz_copy={key:i[dest]}
             board_copy=deepcopy(board)
             board_copy=update_graphics(diz_copy,dest,origin,False,board_copy)
-            minimax = minimax_fun(False,depth-1,board_copy,False,i,alpha,beta)
+            minimax = minimax_fun(False,depth-1,board_copy,False, start_time, max_time, i,alpha,beta)
             # Alpha Beta Pruning
             best = max(best, minimax)
             alpha = max(alpha, best)
@@ -309,14 +318,13 @@ def minimax_fun(max_player,depth,board,black_move,move=[],alpha=float('-inf'),be
                 diz_copy={key:i[dest]}
             board_copy=deepcopy(board)
             board_copy=update_graphics(diz_copy,dest,origin,False,board_copy)
-            minimax = minimax_fun(True,depth-1,board_copy,False,i,alpha,beta)
+            minimax = minimax_fun(True,depth-1,board_copy,False, start_time, max_time, i,alpha,beta)
             # Alpha Beta Pruning
             best = min(best, minimax)
             beta = min(beta, best)
             if beta <= alpha:
                 break  
         return best
-
 
 pygame.init()
 screen = pygame.display.set_mode((637,787))
@@ -336,7 +344,7 @@ board={}
 y = 23
 i=1
 for row in range(8):
-    x=24
+    x=24 # X-axis Pixel offset
     if row%2 != 0:
         while(x<600):
             board[i]=[x,y,0,1,0,0,0]
@@ -351,14 +359,17 @@ for row in range(8):
     y+=75
 
 for i in board.keys():
+    # White Pieces
     if i>20:
         board[i][4]=2
         board[i][5]=0
         print_image(board[i][0],board[i][1],board[i][5],board[i][6],0,0)
+    # Black Pieces
     elif i<=12:
         board[i][4]=2
         board[i][5]=1
         print_image(board[i][0],board[i][1],board[i][5],board[i][6],0,0)
+    # key[n] = blank space, where   12 <= n > 20
 
 turn=1
 fill_image = pygame.image.load("./Images/fill.png")
@@ -392,6 +403,7 @@ while True:
             sys.exit()
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             pos = pygame.mouse.get_pos()
+            print(pos)
             if turn==1:
                 if selected==False:
                     for el in range(1,33):
@@ -505,7 +517,16 @@ while True:
                                         screen.blit(text, text_rect)
                                         pygame.display.update()
                                         board_copy=deepcopy(board)
-                                        val,origin,el,lis=minimax_fun(True,7,board_copy,True)
+                                        # Iterative Deepening
+                                        max_time = 5
+                                        start_time = time.time()
+                                        best_move = None
+                                        current_depth = 1
+                                        while True:
+                                            val,origin,el,lis = minimax_fun(True,current_depth,board_copy, True, start_time, max_time)
+                                            current_depth += 1
+                                            if time.time() - start_time >= max_time:
+                                                break
                                         pygame.draw.rect(screen, (0,0,0), (20,730,595,30))
                                         pygame.draw.rect(screen, (255,255,255), (637/2+(val*596)/36,730,298-(val*596)/36,30))
                                         pygame.draw.rect(screen, (255,0,0), (637/2-2,730,4,30))
