@@ -223,12 +223,12 @@ def evaluate(board,move={},draw=False):
     score=0
     for i in range(1,33):
         if board[i][4]==2:
-            if board[i][5]==1:
+            if board[i][5]==1: # Black
                 if board[i][6]==1:
                     score-=1.5 #negated
                 else:
                     score-=1 #negated
-            elif board[i][5]==0:
+            elif board[i][5]==0: # White
                 if board[i][6]==1:
                     score+=1.5 #negated
                 else:
@@ -263,9 +263,9 @@ def minimax_fun(max_player,depth,board,black_move, start_time, max_time, move=[]
     if depth==0 or game_finished(board,0) or game_finished(board,1):
         val=evaluate(board,move)
         return val
-    if time.time() - start_time >= max_time:
-        val=evaluate(board,move)
-        return val
+    #if time.time() - start_time >= max_time:
+    #    val=evaluate(board,move)
+    #    return val
     
     elif black_move==True:
         max_best=float('-inf')
@@ -285,10 +285,13 @@ def minimax_fun(max_player,depth,board,black_move, start_time, max_time, move=[]
             elif minimax==max_best and max_best>float('-inf'):
                 max_best=minimax
                 coll[dest]=[max_best,i,origin]
+            if time.time() - start_time >= max_time:
+                dest, minimax  = random.choice(list(coll.items()))
+                return minimax[0],minimax[2],dest,minimax[1]
         dest, minimax  = random.choice(list(coll.items()))
         # Iterative Deepening
-        if time.time() - start_time >= max_time:
-            return minimax[0],minimax[2],dest,minimax[1]
+        #if time.time() - start_time >= max_time:
+        #    return minimax[0],minimax[2],dest,minimax[1]
         # Final return
         return minimax[0],minimax[2],dest,minimax[1]
     elif max_player==True:
