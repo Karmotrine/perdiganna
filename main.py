@@ -287,8 +287,8 @@ def minimax_fun(max_player,depth,board,black_move, start_time, max_time, move=[]
                 coll[dest]=[max_best,i,origin]
         dest, minimax  = random.choice(list(coll.items()))
         # Iterative Deepening
-        #if time.time() - start_time >= max_time:
-        #    return minimax[0],minimax[2],dest,minimax[1]
+        if time.time() - start_time >= max_time:
+            return minimax[0],minimax[2],dest,minimax[1]
         # Final return
         return minimax[0],minimax[2],dest,minimax[1]
     elif max_player==True:
