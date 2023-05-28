@@ -5,6 +5,7 @@ import time
 from copy import deepcopy
 import random
 import time
+from Ttable import TTable
 
 #each square is a list of features
 # board = [x,y,row,column,free,color,king]
@@ -257,18 +258,25 @@ def all_moves(color,board):
     return list_final
 
 
-def minimax_fun(max_player,depth,board,black_move, start_time, max_time, move=[],alpha=float('-inf'),beta=float('inf')):
-    print(f"depth: {depth}, alpha: {alpha}, beta: {beta}, max_player: {max_player}")
+def minimax_fun(cache,max_player,depth,board,black_move, start_time, max_time, move=[],alpha=float('-inf'),beta=float('inf')):
+    print(f"depth: {depth}, alpha: {alpha}, beta: {beta}, max_player: {max_player},")
+    #print(f"board: {board} \n")
 
     if depth==0 or game_finished(board,0) or game_finished(board,1):
         val=evaluate(board,move)
         return val
-    #if time.time() - start_time >= max_time:
-    #    val=evaluate(board,move)
-    #    return val
+    # Transposition Table
+    #if cache.check_key(board):  # If board state already stored in cache
+    #    hash_key = cache.get_hash(board)
+    #    if cache.map[hash_key]['depth'] >= depth:
+    #        print("used cache")
+    #        cache_value = cache.map[hash_key]['value']
+    #    else:
+    #        val = evaluate(board, move)
+    #        return val
     
     elif black_move==True:
-        max_best=float('-inf')
+        max_best=float('inf')
         for i in all_moves(1,board):
             for destination in i.keys():
                 dest=destination
@@ -277,21 +285,27 @@ def minimax_fun(max_player,depth,board,black_move, start_time, max_time, move=[]
                 diz_copy={key:i[dest]}
             board_copy=deepcopy(board)
             board_copy=update_graphics(diz_copy,dest,origin,False,board_copy)
-            minimax = minimax_fun(False,depth-1,board_copy,False, start_time, max_time, i)
-            if minimax>max_best:
+            if cache.check_key(board_copy):
+                hash_key = cache.get_hash(board_copy)
+                if cache.map[hash_key]['depth'] >= depth:  
+                    minimax = cache.map[hash_key]['value']
+                else:
+                    minimax = minimax_fun(cache, True,depth-1,board_copy,False, start_time, max_time, i)
+            else:
+                minimax = minimax_fun(cache, True,depth-1,board_copy,False, start_time, max_time, i)
+            if minimax<max_best:
                 coll={}
                 max_best=minimax
                 coll[dest]=[max_best,i,origin]
-            elif minimax==max_best and max_best>float('-inf'):
+            elif minimax==max_best and max_best<float('inf'):
                 max_best=minimax
                 coll[dest]=[max_best,i,origin]
+            hash_key = cache.get_hash(board_copy)
+            cache.map[hash_key] = {'depth': depth, 'value': max_best}
             if time.time() - start_time >= max_time:
                 dest, minimax  = random.choice(list(coll.items()))
                 return minimax[0],minimax[2],dest,minimax[1]
         dest, minimax  = random.choice(list(coll.items()))
-        # Iterative Deepening
-        #if time.time() - start_time >= max_time:
-        #    return minimax[0],minimax[2],dest,minimax[1]
         # Final return
         return minimax[0],minimax[2],dest,minimax[1]
     elif max_player==True:
@@ -304,7 +318,7 @@ def minimax_fun(max_player,depth,board,black_move, start_time, max_time, move=[]
                 diz_copy={key:i[dest]}
             board_copy=deepcopy(board)
             board_copy=update_graphics(diz_copy,dest,origin,False,board_copy)
-            minimax = minimax_fun(False,depth-1,board_copy,False, start_time, max_time, i,alpha,beta)
+            minimax = minimax_fun(cache, False,depth-1,board_copy,False, start_time, max_time, i,alpha,beta)
             # Alpha Beta Pruning
             best = max(best, minimax)
             alpha = max(alpha, best)
@@ -321,13 +335,15 @@ def minimax_fun(max_player,depth,board,black_move, start_time, max_time, move=[]
                 diz_copy={key:i[dest]}
             board_copy=deepcopy(board)
             board_copy=update_graphics(diz_copy,dest,origin,False,board_copy)
-            minimax = minimax_fun(True,depth-1,board_copy,False, start_time, max_time, i,alpha,beta)
+            minimax = minimax_fun(cache, True,depth-1,board_copy,False, start_time, max_time, i,alpha,beta)
             # Alpha Beta Pruning
             best = min(best, minimax)
             beta = min(beta, best)
             if beta <= alpha:
                 break  
         return best
+    
+transposition_table = TTable()
 
 pygame.init()
 screen = pygame.display.set_mode((637,787))
@@ -342,6 +358,7 @@ capture_sound = pygame.mixer.Sound('./Sounds/capture.wav')
 tie_sound = pygame.mixer.Sound('./Sounds/tie.wav')
 winner_sound = pygame.mixer.Sound('./Sounds/winner.wav')
 screen.blit(pygame.image.load('./Images/board.png'), (0, 0))
+
 
 board={}
 y = 23
@@ -526,7 +543,7 @@ while True:
                                         best_move = None
                                         current_depth = 1
                                         while True:
-                                            val,origin,el,lis = minimax_fun(True,current_depth,board_copy, True, start_time, max_time)
+                                            val,origin,el,lis = minimax_fun(transposition_table, True,current_depth,board_copy, True, start_time, max_time)
                                             current_depth += 1
                                             if time.time() - start_time >= max_time:
                                                 break

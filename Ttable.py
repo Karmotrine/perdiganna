@@ -32,4 +32,4 @@ class TTable:
     of a game board that has not been cached yet
     """
     def check_key(self, board: dict) -> bool:
-        return self.map.has_key(self.get_hash(deepcopy(board)))
+        return self.map.has_key(self.get_hash(board))
