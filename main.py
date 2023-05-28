@@ -5,14 +5,105 @@ import time
 from copy import deepcopy
 import random
 import time
+from Ttable import TTable
 
 #each square is a list of features
 # board = [x,y,row,column,free,color,king]
 # row=0 -> even, color=0 -> white, color=1 -> black, king=1 -> True
 # x-axis: +150, y-axis: +75
 # y-axis: inverse (always positive)
-
 # Yellow = Move hint
+
+def ABP_ID_TT(cache,max_player,depth,board,black_move, start_time, max_time, move=[],alpha=float('-inf'),beta=float('inf')):
+    print(f"depth: {depth}, alpha: {alpha}, beta: {beta}, max_player: {max_player}")
+
+    if depth==0 or game_finished(board,0) or game_finished(board,1):
+        val=evaluate(board,move)
+        return val
+    if time.time() - start_time >= max_time:
+        val=evaluate(board,move)
+        return val
+    
+    elif black_move==True:
+        max_best=float('-inf')
+        for i in all_moves(1,board):
+            for destination in i.keys():
+                dest=destination
+                origin=i[dest]['origin']
+                key = str(dest) + '_' + str(origin)
+                diz_copy={key:i[dest]}
+            board_copy=deepcopy(board)
+            board_copy=update_graphics(diz_copy,dest,origin,False,board_copy)
+            # Transposition Table
+            minimax = ABP_ID_TT(cache, False,depth-1,board_copy,False, start_time, max_time, i)
+            if minimax>max_best:
+                coll={}
+                max_best=minimax
+                coll[dest]=[max_best,i,origin]
+            elif minimax==max_best and max_best>float('-inf'):
+                max_best=minimax
+                coll[dest]=[max_best,i,origin]
+        dest, minimax  = random.choice(list(coll.items()))
+        # Iterative Deepening
+        if time.time() - start_time >= max_time:
+            return minimax[0],minimax[2],dest,minimax[1]
+        # Final return
+        return minimax[0],minimax[2],dest,minimax[1]
+    elif max_player==True:
+        best=float('-inf')
+        for i in all_moves(1,board):
+            for destination in i.keys():
+                dest=destination
+                origin=i[dest]['origin']
+                key = str(dest) + '_' + str(origin)
+                diz_copy={key:i[dest]}
+            board_copy=deepcopy(board)
+            board_copy=update_graphics(diz_copy,dest,origin,False,board_copy)
+            if cache.check_key(board_copy):
+                hash_key = cache.get_hash(board_copy)
+                if cache.map[hash_key]['depth'] >= depth:
+                    print("used cache")
+                    minimax = cache.map[hash_key]['value']
+                else:
+                    minimax = ABP_ID_TT(cache, False,depth-1,board_copy,False, start_time, max_time, i,alpha,beta)
+            else:
+                minimax = ABP_ID_TT(cache, False,depth-1,board_copy,False, start_time, max_time, i,alpha,beta)
+            # Alpha Beta Pruning
+            best = max(best, minimax)
+            alpha = max(alpha, best)
+            if beta <= alpha:
+                break
+            hash_key = cache.get_hash(board_copy)
+            cache.map[hash_key] = {'depth': depth, 'value': best}
+        return best
+    elif max_player==False:
+        best=float('inf')
+        for i in all_moves(0,board):
+            for destination in i.keys():
+                dest=destination
+                origin=i[dest]['origin']
+                key = str(dest) + '_' + str(origin)
+                diz_copy={key:i[dest]}
+            board_copy=deepcopy(board)
+            board_copy=update_graphics(diz_copy,dest,origin,False,board_copy)
+            if cache.check_key(board_copy):
+                hash_key = cache.get_hash(board_copy)
+                if cache.map[hash_key]['depth'] >= depth:
+                    print("used cache")
+                    minimax = cache.map[hash_key]['value']
+                else:
+                    minimax = ABP_ID_TT(cache, True,depth-1,board_copy,False, start_time, max_time, i,alpha,beta)
+            else:
+                minimax = ABP_ID_TT(cache, True,depth-1,board_copy,False, start_time, max_time, i,alpha,beta)
+            # Alpha Beta Pruning
+            best = min(best, minimax)
+            beta = min(beta, best)
+            if beta <= alpha:
+                break
+            hash_key = cache.get_hash(board_copy)
+            cache.map[hash_key] = {'depth': depth, 'value': best}
+        return best
+
 def check_moves(el,yellow,board,only_jumps,diz):
     #check for move 1 -> upper left
     if board[el][0]-75>0 and board[el][1]-75>0 and (board[el][6]==1 or board[el][5]==0): #valid move
@@ -256,76 +347,6 @@ def all_moves(color,board):
                 list_final.append(el)
     return list_final
 
-
-def minimax_fun(max_player,depth,board,black_move, start_time, max_time, move=[],alpha=float('-inf'),beta=float('inf')):
-    print(f"depth: {depth}, alpha: {alpha}, beta: {beta}, max_player: {max_player}")
-
-    if depth==0 or game_finished(board,0) or game_finished(board,1):
-        val=evaluate(board,move)
-        return val
-    if time.time() - start_time >= max_time:
-        val=evaluate(board,move)
-        return val
-    
-    elif black_move==True:
-        max_best=float('-inf')
-        for i in all_moves(1,board):
-            for destination in i.keys():
-                dest=destination
-                origin=i[dest]['origin']
-                key = str(dest) + '_' + str(origin)
-                diz_copy={key:i[dest]}
-            board_copy=deepcopy(board)
-            board_copy=update_graphics(diz_copy,dest,origin,False,board_copy)
-            minimax = minimax_fun(False,depth-1,board_copy,False, start_time, max_time, i)
-            if minimax>max_best:
-                coll={}
-                max_best=minimax
-                coll[dest]=[max_best,i,origin]
-            elif minimax==max_best and max_best>float('-inf'):
-                max_best=minimax
-                coll[dest]=[max_best,i,origin]
-        dest, minimax  = random.choice(list(coll.items()))
-        # Iterative Deepening
-        if time.time() - start_time >= max_time:
-            return minimax[0],minimax[2],dest,minimax[1]
-        # Final return
-        return minimax[0],minimax[2],dest,minimax[1]
-    elif max_player==True:
-        best=float('-inf')
-        for i in all_moves(1,board):
-            for destination in i.keys():
-                dest=destination
-                origin=i[dest]['origin']
-                key = str(dest) + '_' + str(origin)
-                diz_copy={key:i[dest]}
-            board_copy=deepcopy(board)
-            board_copy=update_graphics(diz_copy,dest,origin,False,board_copy)
-            minimax = minimax_fun(False,depth-1,board_copy,False, start_time, max_time, i,alpha,beta)
-            # Alpha Beta Pruning
-            best = max(best, minimax)
-            alpha = max(alpha, best)
-            if beta <= alpha:
-                break
-        return best
-    elif max_player==False:
-        best=float('inf')
-        for i in all_moves(0,board):
-            for destination in i.keys():
-                dest=destination
-                origin=i[dest]['origin']
-                key = str(dest) + '_' + str(origin)
-                diz_copy={key:i[dest]}
-            board_copy=deepcopy(board)
-            board_copy=update_graphics(diz_copy,dest,origin,False,board_copy)
-            minimax = minimax_fun(True,depth-1,board_copy,False, start_time, max_time, i,alpha,beta)
-            # Alpha Beta Pruning
-            best = min(best, minimax)
-            beta = min(beta, best)
-            if beta <= alpha:
-                break  
-        return best
-
 pygame.init()
 screen = pygame.display.set_mode((637,787))
 icon = pygame.image.load("./Images/white.png")
@@ -371,6 +392,7 @@ for i in board.keys():
         print_image(board[i][0],board[i][1],board[i][5],board[i][6],0,0)
     # key[n] = blank space, where   12 <= n > 20
 
+cache = TTable()
 turn=1
 fill_image = pygame.image.load("./Images/fill.png")
 cup_image = pygame.image.load("./Images/cup.png")
@@ -518,12 +540,12 @@ while True:
                                         pygame.display.update()
                                         board_copy=deepcopy(board)
                                         # Iterative Deepening
-                                        max_time = 5
+                                        max_time = 7    
                                         start_time = time.time()
                                         best_move = None
                                         current_depth = 1
                                         while True:
-                                            val,origin,el,lis = minimax_fun(True,current_depth,board_copy, True, start_time, max_time)
+                                            val,origin,el,lis = ABP_ID_TT(cache, True,current_depth,board_copy, True, start_time, max_time)
                                             current_depth += 1
                                             if time.time() - start_time >= max_time:
                                                 break
@@ -537,7 +559,7 @@ while True:
                                             prev_score=evaluate(board,move={},draw=True)    
 
                                         # modified to perdigana
-                                        if game_finished(board,0)==True or equal(0)==True:
+                                        if game_finished(board,0)==True or equal(1)==True:
                                             screen.fill([252, 223, 180],rect=(0,638,637,50))
                                             text = font.render('WHITE WINS!', True, (0, 0, 0))
                                             text_rect = text.get_rect(center=(637/2, 660))
